@@ -46,6 +46,7 @@ import server
 # needs to connect to TOR server (encryption should be used)
 # should be able to recieve list of relays (encrypted) of TOR server
 # needs to have access to public keys of relays
+#encryption form: (destination) (encrypted package) -> reciever already knows source and should keep it until answer from server returns
 
 # relays
 # needs to keep address to which relay it will send package if it returns from server -> use ports on relays so when server returns package to specific port, the relay knows to which other relay it needs to send the package to

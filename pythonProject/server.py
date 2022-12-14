@@ -44,10 +44,11 @@ def check_message(message, addr):
             else:
                 response = 'list:'
                 prev_a = -1
-                for i in range(0, amount_of_relays - 1):
-                    a = random.randint(0, len(relay_list)) #create list of random relays, multiple relays are possible
+                for i in range(0, amount_of_relays):
+                    a = random.randint(0, len(relay_list) - 1) #create list of random relays, multiple relays are possible
+                    print(a) #debug
                     while a == prev_a: #make sure sequential relays are not the same relays
-                        a = random.randint(0, len(relay_list)) #choose new random value until they are not the same
+                        a = random.randint(0, len(relay_list)) #choose new random value until they are not the
                     response = response +' ' + str(relay_list[a][0])
                     prev_a = a
         else:
@@ -72,7 +73,7 @@ while True:
     #decode message function here
     message = sentence.decode()
     response = check_message(message, addr)
-
+    #encode message function here
     serverSocket.sendto(str(response).encode(), addr)
 
 
