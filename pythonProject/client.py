@@ -6,6 +6,7 @@ import re
 from socket import *
 from random import *
 from re import *
+import rsa
 
 
 def check_msgFromServer(msgFromServer):
@@ -34,6 +35,8 @@ serverPort = 12000
 j = 2
 clientName = '127.0.0.1'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
+
+publicKey, privateKey = rsa.newkeys(512)
 
 while True:
     if(input('start TOR? ') == ( 'y' or 'Y')):
@@ -75,6 +78,13 @@ while True:
     if(input('start TOR? ') == ( 'n' or 'N')):
         break
     else:
-        print('this is not a valid input')
+        message = input('message? ')
+        encMessage = rsa.encrypt(message.encode(), publicKey)
+        print("original string: ", message)
+        print("encrypted string: ", encMessage)
+        decMessage = rsa.decrypt(encMessage, privateKey).decode()
+
+        print("decrypted string: ", decMessage)
+        #print('this is not a valid input')
 
 
