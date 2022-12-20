@@ -62,7 +62,7 @@ def check_relays():
 port = 12000
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind(('', port))
-print('The server is ready to recieve')
+print('The server is ready to receive')
 
 
 

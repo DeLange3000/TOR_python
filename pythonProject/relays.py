@@ -70,7 +70,7 @@ while True:
     if(a == ('n' or 'N')):
         if(len(relays) > 5):
             while True:
-                print('relay can recieve packages')
+                print('relay can receive packages')
                 processes = []
                 for i in range(0,len(relays)):
                     #------NEEDS TO BE FIXED---------------
