@@ -43,6 +43,17 @@ publicKey, privateKey = rsa.newkeys(512)
 
 while True:
     if(input('start TOR? ') == ( 'y' or 'Y')):
+
+        #GET MESSAGE TO ENCRYPT
+        message = input('message? ')
+        encMessage = rsa.encrypt(message.encode(), publicKey)
+        print("original string: ", message)
+        print("encrypted string: ", encMessage)
+        decMessage = rsa.decrypt(encMessage, privateKey).decode()
+
+        print("decrypted string: ", decMessage)
+        #print('this is not a valid input')
+
         list_of_relays = []
         while True:
             try:
@@ -72,22 +83,19 @@ while True:
                 addr = re.split('[()\', ]', addr)
                 #send package to first relay
                 clientSocket.sendto(str.encode(package_to_send), (addr[2], int(addr[5])))
-
+            while True:
+                counter = 0
                 try:
                     msgFromServer, addr = clientSocket.recvfrom(1024)
+                    print(msgFromServer.decode())
+                    counter =+ 1
+                    if counter == relays_amount:
+                        break
                 except:
                     print('destination could not be reached')
 
     if(input('start TOR? ') == ( 'n' or 'N')):
         break
-    else:
-        message = input('message? ')
-        encMessage = rsa.encrypt(message.encode(), publicKey)
-        print("original string: ", message)
-        print("encrypted string: ", encMessage)
-        decMessage = rsa.decrypt(encMessage, privateKey).decode()
 
-        print("decrypted string: ", decMessage)
-        #print('this is not a valid input')
 
 

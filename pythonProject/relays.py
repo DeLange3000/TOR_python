@@ -2,8 +2,13 @@ import datetime
 import ipaddress
 import multiprocessing
 import subprocess
+import selectors
+import types
+import sys
 from socket import *
 from random import *
+from threading import *
+from selectors import *
 
 # libraries
 import rsa
@@ -19,6 +24,8 @@ from multiprocessing import *
 from subprocess import *
 
 continue_ = True
+relays = []
+return_adrr = [] #keeps the source addr of the packet send to relay so it can send it back once the response arrives
 
 def public_key_to_str(public_key): #from https://python.hotexamples.com/examples/rsa/PublicKey/save_pkcs1/python-publickey-save_pkcs1-method-examples.html
     """ This function produces a string that represents the public key in PEM
@@ -33,12 +40,76 @@ def public_key_to_str(public_key): #from https://python.hotexamples.com/examples
     """
     return PublicKey.save_pkcs1(public_key, format='PEM')
 
-def Running_relays(relay):
-    print('parallel process started')
-    #sentence, addr = relay.recvfrom(1024)
-    #print('packet recieved')
 
-    #process incoming packet
+def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multiple-connections
+    new_message = ''
+    a = ''
+    b = ''
+    #print(sock)
+    message, addr = sock.recvfrom(1024)  # Should be ready to read
+    print(f"Accepted packet from {addr}")
+    # data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
+    # events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    # sel.register(conn, events, data=data)
+    message = message.decode()
+    print(message)
+
+    #add decryption here
+    split_message = message.split(' ')
+    print(split_message)
+
+    #add check to see if a "still alive" message has been send from the server?
+
+    if len(split_message) > 3:
+        try:
+            a = split_message[0][1:len(split_message[0])-1]
+            b = split_message[1][0:len(split_message[1]) - 1]
+            print(a)
+            print(b)
+            #return_addr.append([sock, addr, a, b]) #socket address, source address, destination address (match response on source and socket to get right destination)
+            print(return_adrr)
+            new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
+            print(new_message)
+            return [new_message, a, b]
+        except:
+            sock.sendto(str.encode('bruh'), addr)
+
+    else:
+        sock.sendto(str.encode('bruh bruh'), addr)
+        return [new_message, a, b]
+
+
+
+    # data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
+    # events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    # sel.register(conn, events, data=data)
+
+
+
+def send_keys(relay, serverPort):
+    relaySocket = socket(AF_INET, SOCK_DGRAM)
+    relayName = '127.0.0.1'
+
+
+    keyMessage = ''
+    print(public_key_to_str(relay[1]))
+    keyMessage += str(public_key_to_str(relay[1]))
+    keyMessage += '@' #use @ to be recognised and split by the server
+    keyMessage += str(public_key_to_str(relay[2]))
+    keyMessage += '@'
+    #print(keyMessage)
+    return keyMessage
+
+    # try:
+    #     relaySocket.sendto(keyMessage, (relayName, serverPort))
+    # except:
+    #     print('server cannot be reached')
+
+    #print(keyMessage) #debug
+
+    #print(str.encode(keyMessage))
+
+    return
 
 def create_relays(serverPort):
     for i in range(0, amount_of_relays):
@@ -48,20 +119,23 @@ def create_relays(serverPort):
         relaySocket = socket(AF_INET, SOCK_DGRAM)
 
         sentence = 'relay available'
+        pubKey, privKey = rsa.newkeys(64)
+        relay = send_keys([relaySocket, pubKey, privKey], serverPort)
 
-        relaySocket.sendto(str.encode(sentence), (relayName, serverPort))
+        relaySocket.sendto(str.encode(sentence + ' ' + relay), (relayName, serverPort))
+
         waiting_for_response = True
 
 
         try:
             msgFromServer, addr = relaySocket.recvfrom(1024)
+
             print('From Server: ', msgFromServer.decode(), addr)
             if(msgFromServer.decode() == 'added to relay list'):
                 print('relay is added to server')
 
-                pubKey, privKey = rsa.newkeys(64)
-
                 relays.append([relaySocket, pubKey, privKey])
+
             else:
                 print('relay could not be added to server')
 
@@ -70,22 +144,7 @@ def create_relays(serverPort):
 
     return relays
 
-def send_keys(relays, serverPort):
-    relaySocket = socket(AF_INET, SOCK_DGRAM)
-    relayName = '127.0.0.1'
-    keyMessage = b''
 
-    for relay in relays:
-        print(public_key_to_str(relay[1]))
-        keyMessage += public_key_to_str(relay[1])
-        keyMessage += b'@' #use @ to be recognised and split by the server
-        keyMessage += public_key_to_str(relay[2])
-        keyMessage += b'@'
-
-    relaySocket.sendto(keyMessage, (relayName, serverPort))
-    print(keyMessage) #debug
-    #print(str.encode(keyMessage))
-    return
 
 def decrypt_layer():
     return
@@ -99,27 +158,34 @@ def decrypt_layer():
 get_amount = True
 serverPort = 12000
 timeout = 10000
-relays = []
+sel = selectors.DefaultSelector()
 
 while True:
     a = input('add relays? ')
     if(a == ('n' or 'N')):
         if(len(relays) > 5):
+            for i in range(0, len(relays)):
+                relays[i][0].setblocking(False)
+                sel.register(relays[i][0], selectors.EVENT_READ, data=None)
+            print('relays are ready to recieve')
             while True:
-                print('relay can recieve packages')
-                processes = []
-                for i in range(0,len(relays)):
-                    #------NEEDS TO BE FIXED---------------
-                    process = multiprocessing.Process(target = Running_relays ,args = (str(relays[i][0]))) #run all relays at same time
-                    processes.append(process)
-                    process.start()
+                events = sel.select(timeout=None)
+                for key, mask in events:
+                    # if key.data is None:
+                    message, a ,b = accept_wrapper(key.fileobj)
 
-                b = 0
-                while continue_:
-                    b = b + 1
+                    if(message != '' and a !='' and b !=''):
+                        print(a, b)
+                        # cannot send messages from relay to relay yet
+                        # might have to use an extra switch script or smth
+                        #key.fileobj.sendto(str.encode(message), (a, int(b)))
 
-                for i in processes:
-                    i.join()
+
+                    # else:
+                    #     service_connection(key, mask)
+
+
+
 
                 #-------------------------------------------
         else:
@@ -135,5 +201,5 @@ while True:
             print('only numbers please')
 
         relays = create_relays(serverPort)
-        send_keys(relays, serverPort)
+        #send_keys(relays, serverPort) #addded this to create_relays function
         #print(relays)
