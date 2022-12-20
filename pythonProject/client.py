@@ -28,6 +28,9 @@ def check_msgFromServer(msgFromServer):
         return [package_to_send, list_of_relays[0]] #list_of_relays[0] is first destination address
 
 
+def encrypt_msg(): #using public keys of relays, in reverse order encrypt: message + addr of next hop
+    return
+
 
 #----------------MAIN FUNCTION----------------------------
 

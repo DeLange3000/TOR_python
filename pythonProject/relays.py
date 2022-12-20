@@ -6,6 +6,8 @@ from socket import *
 from random import *
 
 # libraries
+import rsa
+from rsa import *
 
 # from crypt import *
 import random
@@ -17,6 +19,19 @@ from multiprocessing import *
 from subprocess import *
 
 continue_ = True
+
+def public_key_to_str(public_key): #from https://python.hotexamples.com/examples/rsa/PublicKey/save_pkcs1/python-publickey-save_pkcs1-method-examples.html
+    """ This function produces a string that represents the public key in PEM
+        format. This way it can be written to a database or transferred accross
+        an internet connection.
+
+    Args:
+        public_key (rsa.PublicKey): The key that is to be interpreted to a
+                                    PEM-format string.
+    Returns:
+        bytearray: A string of bytes representing the key in PEM format.
+    """
+    return PublicKey.save_pkcs1(public_key, format='PEM')
 
 def Running_relays(relay):
     print('parallel process started')
@@ -43,7 +58,10 @@ def create_relays(serverPort):
             print('From Server: ', msgFromServer.decode(), addr)
             if(msgFromServer.decode() == 'added to relay list'):
                 print('relay is added to server')
-                relays.append(relaySocket)
+
+                pubKey, privKey = rsa.newkeys(64)
+
+                relays.append([relaySocket, pubKey, privKey])
             else:
                 print('relay could not be added to server')
 
@@ -52,7 +70,25 @@ def create_relays(serverPort):
 
     return relays
 
+def send_keys(relays, serverPort):
+    relaySocket = socket(AF_INET, SOCK_DGRAM)
+    relayName = '127.0.0.1'
+    keyMessage = b''
 
+    for relay in relays:
+        print(public_key_to_str(relay[1]))
+        keyMessage += public_key_to_str(relay[1])
+        keyMessage += b'@' #use @ to be recognised and split by the server
+        keyMessage += public_key_to_str(relay[2])
+        keyMessage += b'@'
+
+    relaySocket.sendto(keyMessage, (relayName, serverPort))
+    print(keyMessage) #debug
+    #print(str.encode(keyMessage))
+    return
+
+def decrypt_layer():
+    return
 
 
 
@@ -74,7 +110,7 @@ while True:
                 processes = []
                 for i in range(0,len(relays)):
                     #------NEEDS TO BE FIXED---------------
-                    process = multiprocessing.Process(target = Running_relays ,args = (str(relays[i]))) #run all relays at same time
+                    process = multiprocessing.Process(target = Running_relays ,args = (str(relays[i][0]))) #run all relays at same time
                     processes.append(process)
                     process.start()
 
@@ -99,4 +135,5 @@ while True:
             print('only numbers please')
 
         relays = create_relays(serverPort)
-        print(relays)
+        send_keys(relays, serverPort)
+        #print(relays)

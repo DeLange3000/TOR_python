@@ -9,7 +9,10 @@ relay_list = [] #saves address, time at last response
 
 #checks incoming mesages and handles them
 def check_message(message, addr):
-    message = message.split(' ')
+    if '@' in message:
+        message = message.split('@')
+    else:
+        message = message.split(' ')
     print(message)
 
     if len(message) < 2 or len(message) > 10: #check if message is not too big or too small
@@ -44,6 +47,7 @@ def check_message(message, addr):
             else:
                 response = 'list:'
                 prev_a = -1
+                #moeten we nie volledige lijst relays sturen, en de client zelf een random selectie laten doen ? zodat het pad ongekend is voor de server
                 for i in range(0, amount_of_relays):
                     a = random.randint(0, len(relay_list) - 1) #create list of random relays, multiple relays are possible
                     print(a) #debug
