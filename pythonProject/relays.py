@@ -43,15 +43,6 @@ def public_key_to_str(public_key): #from https://python.hotexamples.com/examples
     return PublicKey.save_pkcs1(public_key, format='PEM')
 
 
-def send_between_relays(sock, message):
-    print('sending to other socket')
-    sleep(1)
-    sock.sendto(str.encode(message[0]), ('127.0.0.1', int(message[2])))
-    return
-
-
-
-
 def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multiple-connections
     new_message = ''
     a = ''
