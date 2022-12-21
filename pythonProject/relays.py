@@ -64,7 +64,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
 
     if len(split_message) > 3:
         try:
-            a = split_message[0][1:len(split_message[0])-1] #socketname
+            a = split_message[0][2:len(split_message[0])-2] #socketname
             b = split_message[1][0:len(split_message[1]) - 1] #socketnumber
             #print(a)
             #print(b)
@@ -72,7 +72,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
             print(return_adrr)
             new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
             #print(new_message)
-            sock.sendto(str.encode(message[0]), ('127.0.0.1', int(b)))
+            sock.sendto(str.encode(new_message), (a, int(b)))
             return
         except:
             sock.sendto(str.encode('bruh'), addr)
@@ -81,7 +81,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
         sock.sendto(str.encode('bruh bruh'), addr)
 
 
-    return [new_message, a, b]
+    return
 
 
 

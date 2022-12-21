@@ -12,14 +12,15 @@ import rsa
 
 
 
-def getTORpackage():
+def getTORpackage(list_of_relays):
 
     package_to_send = 'get me www.openAI.com'
 
     for i in range(1, len(list_of_relays)):
-        package_to_send = list_of_relays[i] + ' ' + package_to_send
+        package_to_send = list_of_relays[i][0] + ' ' + package_to_send
         #add encryption here
-    return [package_to_send, list_of_relays[0]] #list_of_relays[0] is first destination address
+    #package_to_send = str(amount_of_relays) + package_to_send #so relay knows how many hops are left
+    return [package_to_send, list_of_relays[0][0]] #list_of_relays[0] is first destination address
 
 
 def check_msgFromServer(split_msgFromServer, relays_recieving, list_of_relays):
@@ -75,7 +76,7 @@ while True:
         try:
             clientSocket.sendto(str.encode(sentence), (clientName, serverPort))
             counter = 0
-            while True:
+            while counter < amount_of_relays + 1:
 
                 try:
                     msgFromServer, addr = clientSocket.recvfrom(1024)
@@ -100,17 +101,26 @@ while True:
                 except:
                     print('destination could not be reached')
 
-            package_to_send, addr  = getTORpackage()
+
+
         except:
             print('server cannot be reached')
             msgFromServer = ''
 
-
-
+        print('create TOR package')
+        package_to_send, addr  = getTORpackage(list_of_relays)
         if (package_to_send != ''):
              addr = re.split('[()\', ]', addr)
              #send package to first relay
              clientSocket.sendto(str.encode(package_to_send), (addr[2], int(addr[5])))
+
+        while True:
+            try:
+                msgFromServer, addr = clientSocket.recvfrom(1024)
+                msgFromServer = msgFromServer.decode()
+                print(msgFromServer)
+            except:
+                print('Server did not respond')
 
     if(input('start TOR? ') == ( 'n' or 'N')):
         break
