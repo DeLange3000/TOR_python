@@ -9,23 +9,25 @@ from re import *
 import rsa
 
 
-def check_msgFromServer(msgFromServer):
 
-    if( msgFromServer == 'not enough relays available'):
-        print('not enough relays available')
-        return ['', '']
-    msgFromServer = msgFromServer.split(' ')
-    if(msgFromServer[0] == 'list:'):
-        for i in range(1, len(msgFromServer)-1, 2):
-            list_of_relays.append(msgFromServer[i]+ ' ' + msgFromServer[i+1])
-        #print(list_of_relays)
 
-        package_to_send = 'get me www.openAI.com'
 
-        for i in range(1, len(list_of_relays)):
-            package_to_send = list_of_relays[i] + ' ' + package_to_send
-            #add encryption here
-        return [package_to_send, list_of_relays[0]] #list_of_relays[0] is first destination address
+def getTORpackage():
+
+    package_to_send = 'get me www.openAI.com'
+
+    for i in range(1, len(list_of_relays)):
+        package_to_send = list_of_relays[i] + ' ' + package_to_send
+        #add encryption here
+    return [package_to_send, list_of_relays[0]] #list_of_relays[0] is first destination address
+
+
+def check_msgFromServer(msgFromServer, relays_recieving, list_of_relays):
+    if(relays_recieving == True):
+        list_of_relays.append(msgFromServer)
+    else:
+        return
+
 
 
 def encrypt_msg(): #using public keys of relays, in reverse order encrypt: message + addr of next hop
@@ -38,6 +40,8 @@ serverPort = 12000
 j = 2
 clientName = '127.0.0.1'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
+amount_of_relays = 0
+relays_recieving = False
 
 publicKey, privateKey = rsa.newkeys(512)
 
@@ -57,42 +61,52 @@ while True:
         list_of_relays = []
         while True:
             try:
-                relays_amount = int(input('how many relays? '))
+                amount_of_relays = int(input('how many relays? '))
                 break
             except:
                 print('this is not a number')
 
-        sentence = 'request relays ' + str(relays_amount)
+        sentence = 'request relays ' + str(amount_of_relays)
         try:
             clientSocket.sendto(str.encode(sentence), (clientName, serverPort))
-            msgFromServer, addr = clientSocket.recvfrom(1024)
-            msgFromServer = msgFromServer.decode()
-            print('From Server: ', msgFromServer)
-            print(addr)
+            counter = 0
+            while True:
+
+                try:
+                    msgFromServer, addr = clientSocket.recvfrom(1024)
+                    msgFromServer = msgFromServer.decode()
+                    print(msgFromServer)
+                    if(msgFromServer != ''):
+                        if( msgFromServer == 'not enough relays available'):
+                            print('not enough relays available')
+                        msgFromServer = msgFromServer.split(' ')
+                        if(msgFromServer[0] == 'list' and msgFromServer[1] == 'of' and msgFromServer[2] == 'relays:'):
+                            relays_recieving = True
+                        check_msgFromServer(msgFromServer, relays_recieving, list_of_relays)
+
+
+                    #print(counter)
+                        if (relays_recieving):
+                                if(counter == amount_of_relays + 1):
+                                    relays_recieving = False
+                                    break
+                                else:
+                                    counter += 1
+
+                except:
+                    print('destination could not be reached')
+
+            package_to_send, addr  = getTORpackage()
         except:
             print('server cannot be reached')
             msgFromServer = ''
 
 
-        if(msgFromServer != ''):
-            package_to_send, addr = check_msgFromServer(msgFromServer)
-            #print(addr)
-            #print('total package: ',package_to_send)
-            #print(list_of_relays)
-            if (package_to_send != ''):
-                addr = re.split('[()\', ]', addr)
-                #send package to first relay
-                clientSocket.sendto(str.encode(package_to_send), (addr[2], int(addr[5])))
-            while True:
-                counter = 0
-                try:
-                    msgFromServer, addr = clientSocket.recvfrom(1024)
-                    print(msgFromServer.decode())
-                    counter =+ 1
-                    if counter == relays_amount:
-                        break
-                except:
-                    print('destination could not be reached')
+
+        if (package_to_send != ''):
+             addr = re.split('[()\', ]', addr)
+             #send package to first relay
+             clientSocket.sendto(str.encode(package_to_send), (addr[2], int(addr[5])))
 
     if(input('start TOR? ') == ( 'n' or 'N')):
         break

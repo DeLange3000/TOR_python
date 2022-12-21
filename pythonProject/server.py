@@ -51,19 +51,24 @@ def check_message(message, addr):
             if(len(relay_list) < 5):
                 response = 'not enough relays available' #TOR needs enough relays to work
             else:
-                response = 'list:'
+                response = ''
                 prev_a = -1
+                try:
+                    serverSocket.sendto(str('list of relays:'
+                                            '').encode(), addr)
+                except:
+                    print('host not reachable')
                 #moeten we nie volledige lijst relays sturen, en de client zelf een random selectie laten doen ? zodat het pad ongekend is voor de server
-                relay_indexes = []
                 for i in range(0, amount_of_relays):
                     a = random.randint(0, len(relay_list) - 1) #create list of random relays, multiple relays are possible
                     print(a) #debug
                     while a == prev_a: #make sure sequential relays are not the same relays
                         a = random.randint(0, len(relay_list)) #choose new random value until they are not the
-                    response = response +' ' + str(relay_list[a][0])
-                    # for relay in relay_indexes:
-                    #     serverSocket.sendto(str(relays[a]).encode(), addr)
-                    relay_indexes.append(a)
+                    new_message = str(relay_list[a][0])+ ' ' + relay_list[a][2]
+                    try:
+                        serverSocket.sendto(str(new_message).encode(), addr)
+                    except:
+                        print('host not reachable')
                     prev_a = a
         else:
             response = 'YOUR MOM'
@@ -88,7 +93,8 @@ while True:
     message = sentence.decode()
     response = check_message(message, addr)
     #encode message function here
-    serverSocket.sendto(str(response).encode(), addr)
+    if response != '':
+        serverSocket.sendto(str(response).encode(), addr)
 
 
 

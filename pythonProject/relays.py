@@ -9,6 +9,7 @@ from socket import *
 from random import *
 from threading import *
 from selectors import *
+from time import sleep
 
 # libraries
 import rsa
@@ -26,6 +27,7 @@ from subprocess import *
 continue_ = True
 relays = []
 return_adrr = [] #keeps the source addr of the packet send to relay so it can send it back once the response arrives
+serverPort = 12000
 
 def public_key_to_str(public_key): #from https://python.hotexamples.com/examples/rsa/PublicKey/save_pkcs1/python-publickey-save_pkcs1-method-examples.html
     """ This function produces a string that represents the public key in PEM
@@ -39,6 +41,15 @@ def public_key_to_str(public_key): #from https://python.hotexamples.com/examples
         bytearray: A string of bytes representing the key in PEM format.
     """
     return PublicKey.save_pkcs1(public_key, format='PEM')
+
+
+def send_between_relays(sock, message):
+    print('sending to other socket')
+    sleep(1)
+    sock.sendto(str.encode(message[0]), ('127.0.0.1', int(message[2])))
+    return
+
+
 
 
 def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multiple-connections
@@ -62,21 +73,24 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
 
     if len(split_message) > 3:
         try:
-            a = split_message[0][1:len(split_message[0])-1]
-            b = split_message[1][0:len(split_message[1]) - 1]
-            print(a)
-            print(b)
+            a = split_message[0][1:len(split_message[0])-1] #socketname
+            b = split_message[1][0:len(split_message[1]) - 1] #socketnumber
+            #print(a)
+            #print(b)
             #return_addr.append([sock, addr, a, b]) #socket address, source address, destination address (match response on source and socket to get right destination)
             print(return_adrr)
             new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
-            print(new_message)
-            return [new_message, a, b]
+            #print(new_message)
+            sock.sendto(str.encode(message[0]), ('127.0.0.1', int(b)))
+            return
         except:
             sock.sendto(str.encode('bruh'), addr)
 
     else:
         sock.sendto(str.encode('bruh bruh'), addr)
-        return [new_message, a, b]
+
+
+    return [new_message, a, b]
 
 
 
@@ -168,23 +182,12 @@ while True:
                 relays[i][0].setblocking(False)
                 sel.register(relays[i][0], selectors.EVENT_READ, data=None)
             print('relays are ready to recieve')
+            process_running = False
             while True:
                 events = sel.select(timeout=None)
                 for key, mask in events:
                     # if key.data is None:
-                    message, a ,b = accept_wrapper(key.fileobj)
-
-                    if(message != '' and a !='' and b !=''):
-                        print(a, b)
-                        # cannot send messages from relay to relay yet
-                        # might have to use an extra switch script or smth
-                        #key.fileobj.sendto(str.encode(message), (a, int(b)))
-
-
-                    # else:
-                    #     service_connection(key, mask)
-
-
+                    message = accept_wrapper(key.fileobj)
 
 
                 #-------------------------------------------
