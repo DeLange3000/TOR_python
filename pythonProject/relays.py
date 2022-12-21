@@ -53,6 +53,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
     # data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
     # events = selectors.EVENT_READ | selectors.EVENT_WRITE
     # sel.register(conn, events, data=data)
+
     message = message.decode()
     print(message)
 
@@ -68,8 +69,9 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
             b = split_message[1][0:len(split_message[1]) - 1] #socketnumber
             #print(a)
             #print(b)
-            #return_addr.append([sock, addr, a, b]) #socket address, source address, destination address (match response on source and socket to get right destination)
-            print(return_adrr)
+            #print(sock.getaddrinfo())
+            #return_addr.append([addr, a, b]) #socket address, source address, destination address (match response on source and socket to get right destination)
+            #print(return_adrr)
             new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
             #print(new_message)
             sock.sendto(str.encode(new_message), (a, int(b)))
