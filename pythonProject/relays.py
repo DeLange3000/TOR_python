@@ -60,7 +60,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
     # sel.register(conn, events, data=data)
 
     message = message.decode()
-    print(message)
+    print('incoming message: ',message)
 
     send_back_to_index = -1
     try:
@@ -69,10 +69,11 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
         print('message has not passed through here')
     if(send_back_to_index != -1):
         if(destination_addr[send_back_to_index] == addr):
-            #add encryption here
+            #add encryption here (this is for response from server)
 
             try:
                 sock.sendto(str.encode(message), source_addr[send_back_to_index])
+                print('sending message: ', message, ' to: ', source_addr[send_back_to_index])
 
             except:
                 print('destination cannot be reached')
@@ -82,9 +83,9 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
             socket_addr.pop(send_back_to_index)
             return
 
-    #add decryption here
+    #add decryption here (from client to server)
     split_message = message.split(' ')
-    print(split_message)
+    #print(split_message)
 
     #add check to see if a "still alive" message has been send from the server?
 
@@ -106,12 +107,15 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
             new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
             #print(new_message)
             sock.sendto(str.encode(new_message), (a, int(b)))
+            print('sending new message: ', new_message, ' to: ', (a, int(b)))
             return
         except:
             sock.sendto(str.encode('bruh'), addr)
+            print('sending response: ', 'bruh', ' to: ', addr)
 
     else:
         sock.sendto(str.encode('bruh bruh'), addr)
+        print('sending response: ', 'bruh bruh', ' to: ', addr)
 
 
     return
@@ -161,14 +165,14 @@ def create_relays(serverPort):
         relay = send_keys([relaySocket, pubKey, privKey], serverPort)
 
         relaySocket.sendto(str.encode(sentence + ' ' + relay), (relayName, serverPort))
-
+        print('sending message: ',sentence + ' ' + relay , ' to: ', (relayName, serverPort))
         waiting_for_response = True
 
 
         try:
             msgFromServer, addr = relaySocket.recvfrom(1024)
 
-            print('From Server: ', msgFromServer.decode(), addr)
+            #print('From Server: ', msgFromServer.decode(), addr)
             if(msgFromServer.decode() == 'added to relay list'):
                 print('relay is added to server')
 
@@ -223,8 +227,11 @@ while True:
     if(a == ('y' or 'Y')):
         try:
             amount_of_relays = int(input('how many relays? '))
-            get_amount = False
-            relays = create_relays(serverPort)
+            if(amount_of_relays > 0):
+                get_amount = False
+                relays = create_relays(serverPort)
+            else:
+                print('should be higher then 0')
         except:
             print('only numbers please')
 

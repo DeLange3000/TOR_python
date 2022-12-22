@@ -47,28 +47,33 @@ def check_message(message, addr):
                 amount_of_relays = int(split_message[2]) #check if an actual number is requested
             except:
                 response = 'NOT A NUMBER'
+                return response
 
-            if(len(relay_list) < 5):
+            if(len(relay_list) < amount_of_relays or len(relay_list) < 5):
                 response = 'not enough relays available' #TOR needs enough relays to work
+                return response
             else:
                 response = ''
-                prev_a = -1
+                range_of_a = []
+                for i in range(0,len(relay_list)):
+                    range_of_a.append(i)
+                #print(range_of_a)
                 try:
                     serverSocket.sendto(str('list of relays:').encode(), addr)
                 except:
                     print('host not reachable')
+                    return
                 #moeten we nie volledige lijst relays sturen, en de client zelf een random selectie laten doen ? zodat het pad ongekend is voor de server
                 for i in range(0, amount_of_relays):
-                    a = random.randint(0, len(relay_list) - 1) #create list of random relays, multiple relays are possible
-                    print(a) #debug
-                    while a == prev_a: #make sure sequential relays are not the same relays
-                        a = random.randint(0, len(relay_list)) #choose new random value until they are not the
-                    new_message = str(relay_list[a][0])+ ' ' + relay_list[a][2]
+                    a = random.randint(0, len(range_of_a)) #create list of random relays, multiple relays are possible
+                    #print(a, range_of_a[a]) #debug
+                    new_message = str(relay_list[range_of_a[a]][0])+ ' ' + relay_list[range_of_a[a]][2]
+                    range_of_a.remove(a) #every relay is seperate
                     try:
                         serverSocket.sendto(str(new_message).encode(), addr)
+                        print('sending relay info')
                     except:
                         print('host not reachable')
-                    prev_a = a
         else:
             response = 'YOUR MOM'
     return response
@@ -94,6 +99,7 @@ while True:
     #encode message function here
     if response != '':
         serverSocket.sendto(str(response).encode(), addr)
+        print('sending response: ', response, ' to: ', addr)
 
 
 

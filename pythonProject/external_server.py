@@ -24,11 +24,12 @@ while True:
     message = sentence.decode()
     print('from client: ', message)
 
-    response = 'response from external server'
+    response = 'response from external server for: ' + message
     #encode message function here
     if response != '':
         try:
             serverSocket.sendto(str(response).encode(), addr)
+            print(print('sending response: ', response, ' to: ', addr))
         except:
             print('destination not available')
 

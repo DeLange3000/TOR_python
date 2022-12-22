@@ -112,12 +112,13 @@ while True:
             print('server cannot be reached')
             msgFromServer = ''
 
-        print('create TOR package')
+        print('creating TOR package')
         package_to_send, addr  = getTORpackage(list_of_relays)
         if (package_to_send != ''):
              addr = re.split('[()\', ]', addr)
              #send package to first relay
              clientSocket.sendto(str.encode(package_to_send), (addr[2], int(addr[5])))
+             print('sending TOR package: ', package_to_send, ' to: ', (addr[2], int(addr[5])))
 
         while True:
             try:
