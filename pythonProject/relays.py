@@ -26,7 +26,10 @@ from subprocess import *
 
 continue_ = True
 relays = []
-return_adrr = [] #keeps the source addr of the packet send to relay so it can send it back once the response arrives
+source_addr = [] #keeps the source addr of the packet send to relay so it can send it back once the response arrives
+destination_addr = []
+socket_addr = []
+
 serverPort = 12000
 
 def public_key_to_str(public_key): #from https://python.hotexamples.com/examples/rsa/PublicKey/save_pkcs1/python-publickey-save_pkcs1-method-examples.html
@@ -44,6 +47,8 @@ def public_key_to_str(public_key): #from https://python.hotexamples.com/examples
 
 
 def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multiple-connections
+    #print('size response array: ', len(source_addr))
+
     new_message = ''
     a = ''
     b = ''
@@ -57,6 +62,26 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
     message = message.decode()
     print(message)
 
+    send_back_to_index = -1
+    try:
+        send_back_to_index = socket_addr.index(sock)
+    except:
+        print('message has not passed through here')
+    if(send_back_to_index != -1):
+        if(destination_addr[send_back_to_index] == addr):
+            #add encryption here
+
+            try:
+                sock.sendto(str.encode(message), source_addr[send_back_to_index])
+
+            except:
+                print('destination cannot be reached')
+
+            source_addr.pop(send_back_to_index)
+            destination_addr.pop(send_back_to_index)
+            socket_addr.pop(send_back_to_index)
+            return
+
     #add decryption here
     split_message = message.split(' ')
     print(split_message)
@@ -69,9 +94,15 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
             b = split_message[1][0:len(split_message[1]) - 1] #socketnumber
             #print(a)
             #print(b)
-            #print(sock.getaddrinfo())
-            #return_addr.append([addr, a, b]) #socket address, source address, destination address (match response on source and socket to get right destination)
-            #print(return_adrr)
+            #print(addr)
+            source = (a, int(b))
+
+
+
+            source_addr.append(addr) #source addr
+            destination_addr.append(source) #dest addr
+            socket_addr.append(sock) #current socket
+
             new_message = message[len(split_message[0]) + len(split_message[1]) + 2: len(message)]
             #print(new_message)
             sock.sendto(str.encode(new_message), (a, int(b)))
@@ -193,9 +224,10 @@ while True:
         try:
             amount_of_relays = int(input('how many relays? '))
             get_amount = False
+            relays = create_relays(serverPort)
         except:
             print('only numbers please')
 
-        relays = create_relays(serverPort)
+
         #send_keys(relays, serverPort) #addded this to create_relays function
         #print(relays)

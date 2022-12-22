@@ -15,9 +15,14 @@ import rsa
 def getTORpackage(list_of_relays):
 
     package_to_send = 'get me www.openAI.com'
+    package_destination = ('127.0.0.1', 13000) #address of external server
+    package_to_send = str(package_destination) +' ' + package_to_send
 
-    for i in range(1, len(list_of_relays)):
+
+    for i in range(1, len(list_of_relays[:])):
         package_to_send = list_of_relays[i][0] + ' ' + package_to_send
+        #print('package to send: ',package_to_send)
+        #print('lenght of relay list: ', str(len(list_of_relays[:])))
         #add encryption here
     #package_to_send = str(amount_of_relays) + package_to_send #so relay knows how many hops are left
     return [package_to_send, list_of_relays[0][0]] #list_of_relays[0] is first destination address
@@ -118,7 +123,7 @@ while True:
             try:
                 msgFromServer, addr = clientSocket.recvfrom(1024)
                 msgFromServer = msgFromServer.decode()
-                print(msgFromServer)
+                print('Server response: ', msgFromServer)
             except:
                 print('Server did not respond')
 

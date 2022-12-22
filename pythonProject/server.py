@@ -54,8 +54,7 @@ def check_message(message, addr):
                 response = ''
                 prev_a = -1
                 try:
-                    serverSocket.sendto(str('list of relays:'
-                                            '').encode(), addr)
+                    serverSocket.sendto(str('list of relays:').encode(), addr)
                 except:
                     print('host not reachable')
                 #moeten we nie volledige lijst relays sturen, en de client zelf een random selectie laten doen ? zodat het pad ongekend is voor de server
