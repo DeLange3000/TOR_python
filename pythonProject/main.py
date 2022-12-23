@@ -1,11 +1,23 @@
 # libraries
+import rsa
 
-# from crypt import *
-from socket import *
-
-#include
-import client
-import server
+def encrypt_long(bytes, pubkey):
+    outp = b''
+    for byte in bytes:
+        enc = rsa.encrypt(byte.to_bytes(1, 'big'), pubkey)
+        outp += enc
+    return outp
+    
+def decrypt_long(bytes, privkey):
+    outp = b''
+    bytes_group = [bytes[i:i + 16] for i in range(0, len(bytes), 16)]
+    print("bgroup:",bytes_group)
+    for bytes_16 in bytes_group:
+        #print(bytes_16)
+        dec = rsa.decrypt(bytes_16, privkey)
+        #print("dec:",dec)
+        outp += dec
+    return outp
 
 # todo
 # - implement server that stores and spreads relays
