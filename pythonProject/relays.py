@@ -1,14 +1,11 @@
 import datetime
 import ipaddress
-import multiprocessing
-import subprocess
 import selectors
 import types
 import sys
 import re
 from socket import *
 from random import *
-from threading import *
 from selectors import *
 from time import sleep
 
@@ -22,8 +19,6 @@ from ipaddress import *
 from socket import *
 from datetime import *
 from random import *
-from multiprocessing import *
-from subprocess import *
 
 from main import *
 
@@ -54,6 +49,7 @@ def public_key_to_str(public_key): #from https://python.hotexamples.com/examples
     #pk = split[1]
     return PublicKey.save_pkcs1(public_key, format='PEM').decode("ascii")
 
+#this runs if a relay recieves something
 def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multiple-connections
     #print('size response array: ', len(source_addr))
 
@@ -80,22 +76,21 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
     if(send_back_to_index != -1):
         if(destination_addr[send_back_to_index] == addr):
             #add encryption here (this is for response from server)
-            
-            
-            
-            
 
-            try:
-                sock.sendto(str.encode(message), source_addr[send_back_to_index])
+
+
+             try:
+                #check if previous packet has same destination as the source address of current packet
+                sock.sendto(message, source_addr[send_back_to_index])
                 print('sending message: ', message, ' to: ', source_addr[send_back_to_index])
 
-            except:
+             except:
                 print('destination cannot be reached')
-
-            source_addr.pop(send_back_to_index)
-            destination_addr.pop(send_back_to_index)
-            socket_addr.pop(send_back_to_index)
-            return
+                #remove previous packet data
+                source_addr.pop(send_back_to_index)
+                destination_addr.pop(send_back_to_index)
+                socket_addr.pop(send_back_to_index)
+                return
     
     try:
         #add decryption here (from client to server)
@@ -103,13 +98,15 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
         #print(sock)
         _, _, currPrivKey = [relay for relay in relays if relay[0] == sock][0]
         print("priv:",currPrivKey)
-    
+
+        #decrytion
         next_addr = decrypt_long(message[0:320], currPrivKey)
         print("decrypted addr:", next_addr)
         rest_msg = message[320:]
         if next_addr[0] == b'l'[0]: # signifies last relay before end -> decrypt everything, also     rest_msg
             next_addr = next_addr[1:]
             rest_msg = decrypt_long(rest_msg, currPrivKey).lstrip(b'l')
+            rest_msg = rest_msg[1:]
         #print("rest_:",rest_msg)
         split_message = message.split(b' ')
         #print("split msg:",split_message)
@@ -127,9 +124,7 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
     #
     #
     #
-     #           source_addr.append(addr) #source addr
-     #           destination_addr.append(source) #dest addr
-     #           socket_addr.append(sock) #current socket
+
     #
      #           new_message = message[len(split_message[0]) + len(split_message[1]) + 2:     len(message)]
      #           #print(new_message)
@@ -143,10 +138,15 @@ def accept_wrapper(sock): #https://realpython.com/python-sockets/#handling-multi
      #   else:
     
         next_addr_arr = [next_addr[2:11].decode(), next_addr[14:19].decode()]
-    
+
+        #add information of package send to server to list so the package can find its way back to the client
+        source_addr.append(addr) #source addr
+        destination_addr.append((next_addr_arr[0], int(next_addr_arr[1]))) #dest addr
+        socket_addr.append(sock) #current socket
+
         #send package to next relay
         sock.sendto(rest_msg, (next_addr_arr[0], int(next_addr_arr[1])))
-        #print('sending TOR package: ', rest_msg, ' to: ', (next_addr_arr[0], int(next_addr_arr[1])))
+        print('sending TOR package: ', rest_msg, ' to: ', (next_addr_arr[0], int(next_addr_arr[1])))
     
             #sock.sendto(str.encode('bruh bruh'), addr)
             #print('sending response: ', 'bruh bruh', ' to: ', addr)
@@ -171,9 +171,9 @@ def send_keys(relay, serverPort):
     keyMessage = ''
     #print(public_key_to_str(relay[1]))
     keyMessage += str(public_key_to_str(relay[1]))
-    keyMessage += '@' #use @ to be recognised and split by the server
-    keyMessage += str(public_key_to_str(relay[2]))
-    keyMessage += '@'
+    # keyMessage += '@' #use @ to be recognised and split by the server
+    # keyMessage += str(public_key_to_str(relay[2]))
+    # keyMessage += '@'
     #print(keyMessage)
     return keyMessage
 
@@ -190,7 +190,7 @@ def send_keys(relay, serverPort):
 
 def create_relays(serverPort):
     for i in range(0, amount_of_relays):
-        current_time = datetime.now().time().microsecond
+        # current_time = datetime.now().time().microsecond
         relayName = '127.0.0.1'
         print(relayName)
         relaySocket = socket(AF_INET, SOCK_DGRAM)

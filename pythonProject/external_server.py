@@ -25,7 +25,6 @@ while True:
     print('from client: ', message)
 
     response = 'response from external server for: ' + message
-    #encode message function here
     if response != '':
         try:
             serverSocket.sendto(str(response).encode(), addr)

@@ -19,12 +19,6 @@ def decrypt_long(bytes, privkey):
         outp += dec
     return outp
 
-# todo
-# - implement server that stores and spreads relays
-# - implement client that can contact server and recieve relay addresses
-# - implement challenge-response in server
-# - implement encryption on relays
-
 # peer reaches server to say it wants to join tor network
 # peer recieves message from server if it is joined
 # peer choses amount of relays (same relays can be used more then once)

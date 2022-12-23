@@ -26,8 +26,9 @@ def check_message(message, addr):
             except:
                 try:
                     message = re.split('[@]', message[len(split_message[0])+len(split_message[1]) + 2 : len(message)])
+                    #print(message)
                     #message[0] is public key , message[1] is private key
-                    relay_list.append([addr, datetime.now(), message[0], message[1]]) #add relay to list
+                    relay_list.append([addr, datetime.now(), message[0]]) #add relay to list
  #                   print('list: ', relay_list)
                     response = 'added to relay list'
                 except:
@@ -64,17 +65,15 @@ def check_message(message, addr):
                 except:
                     print('host not reachable')
                     return
-                #moeten we nie volledige lijst relays sturen, en de client zelf een random selectie laten doen ? zodat het pad ongekend is voor de server
+
                 for i in range(0,amount_of_relays):
-                
-                # nu gewoon de eerste zoveel relays sturen
-				# anders werkte het bij mij niet
-  #                  a = random.randint(0, len(range_of_a)-1) #create list of random relays, multiple relays are possible
-  #                  #print("a:",a)
-  #                  #print("range of a:", range_of_a) #debug
+
+                    a = random.randint(0, len(range_of_a)-1) #create list of random relays, multiple relays are possible
+                    #print("a:",a)
+                    #print("range of a:", range_of_a) #debug
                     new_message = str(relay_list[i][0])+ ' ' + relay_list[i][2]
                     print(new_message)
-   #                 range_of_a.remove(range_of_a[a]) #every relay is seperate
+                    range_of_a.remove(range_of_a[a]) #every relay is seperate
                     try:
                         serverSocket.sendto(str(new_message).encode(), addr)
                         print('sending relay info')

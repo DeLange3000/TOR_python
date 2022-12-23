@@ -55,17 +55,9 @@ def check_msgFromServer(split_msgFromServer, relays_recieving, list_of_relays):
 
 
 
-
-def encrypt_msg(package_to_send): #using public keys of relays, in reverse order encrypt: message + addr of next hop
-    
-    
-    return
-
-
 #----------------MAIN FUNCTION----------------------------
 
 serverPort = 12000
-j = 2
 clientName = '127.0.0.1'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 print(clientSocket)
@@ -79,12 +71,12 @@ while True:
 
         #GET MESSAGE TO ENCRYPT
         message = input('message? ')
-        encMessage = encrypt_long(message.encode(), publicKey)
-        print("original string: ", message)
-        print("encrypted string: ", encMessage)
-        decMessage = decrypt_long(encMessage, privateKey).decode()
+        # encMessage = encrypt_long(message.encode(), publicKey)
+        # print("original string: ", message)
+        # print("encrypted string: ", encMessage)
+        # decMessage = decrypt_long(encMessage, privateKey).decode()
 
-        print("decrypted string: ", decMessage)
+        # print("decrypted string: ", decMessage)
         #print('this is not a valid input')
 
         list_of_relays = []
@@ -98,17 +90,21 @@ while True:
 
         sentence = 'request relays ' + str(amount_of_relays)
         try:
+            #ask server for relays
             clientSocket.sendto(str.encode(sentence), (clientName, serverPort))
+            print('sending package: ', sentence, ' to: ', (clientName, serverPort))
+            #server should send a relay in each response if TOR network is up
             counter = 0
             while counter < amount_of_relays + 1:
                 try:
                     msgFromServer, addr = clientSocket.recvfrom(1024)
                     msgFromServer = msgFromServer.decode()
-                    #print(msgFromServer)
+                    print(msgFromServer)
                     if(msgFromServer != ''):
                         if( msgFromServer == 'not enough relays available'):
                             print('not enough relays available')
                         split_msgFromServer = msgFromServer.split(' ')
+                        #this is first message send from server before sending all the relays
                         if(split_msgFromServer[0] == 'list' and split_msgFromServer[1] == 'of' and split_msgFromServer[2] == 'relays:'):
                             relays_recieving = True
                             #print("counter:",counter)
@@ -133,7 +129,7 @@ while True:
             continue
 
         print('creating TOR package')
-        package_to_send, addr  = getTORpackage(list_of_relays, message)
+        package_to_send, addr  = getTORpackage(list_of_relays, message) #encrypting package
         if (package_to_send != ''):
              addr = re.split('[()\', ]', addr)
              
@@ -143,6 +139,7 @@ while True:
 
         while True:
             try:
+                #listen for reponse from server
                 msgFromServer, addr = clientSocket.recvfrom(1024)
                 msgFromServer = msgFromServer.decode()
                 print('Server response: ', msgFromServer)
