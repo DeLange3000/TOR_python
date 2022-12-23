@@ -1,4 +1,4 @@
-# TOR_pythonREAD ME
+# TOR_python
 
 the project consists of 4 scripts (you should not run main.py) here is an overview on how to get everything running:
 
