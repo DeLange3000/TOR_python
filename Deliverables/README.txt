@@ -5,7 +5,9 @@ the project consists of 4 scripts (you should not run main.py) here is an overvi
 GENERAL REMARKS:
 	If a message is recieved or send, the message and source/destination adress are printed
 	DO NOT RUN MAIN
-
+	If the relays script crashes of is stopped, then the server script should start again since the list of relays in the server is no longer correct.
+	Be carefull if you create too many relays in relays. Too big of a number will crash the program since there are too many relays for the select to handle. Limit the available relays to 500.
+	Be carefull if you select too many relays in Client. Limit the relays to around 50 in order to not crash the program.
 SERVER:
 	This is the TOR server and needs to be started first. You should not need to input anything.
 	It will run automatically. Once the message "The server is ready to recieve" is printed, then the TOR server is active
@@ -29,8 +31,9 @@ EXTERNAL SERVER:
 	
 CLIENT:
 	If server, relays and external_server are running, you can start the client script.
-	It shows "start TOR". If you type "y" or "Y" and press enter, then it will ask "how many relays?".
-	Type an integer and press enter
+	It shows "start TOR". If you type "y" or "Y" and press enter, then it will ask "message??".
+	Type in an message you want to send to the external server.
+	Then the client asks "how many relays?". Put in an integer number of the amount of relays you want to use.
 	Wait for response from external server
 
 CONGRATS! you have succesfully run the TOR protocol locally on your computer.

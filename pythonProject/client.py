@@ -67,7 +67,8 @@ relays_recieving = False
 publicKey, privateKey = rsa.newkeys(128)
 
 while True:
-    if(input('start TOR? ') == ( 'y' or 'Y')):
+    inputt = input('start TOR? ')
+    if( inputt == ( 'y' or 'Y')):
 
         #GET MESSAGE TO ENCRYPT
         message = input('message? ')
@@ -83,7 +84,10 @@ while True:
         while True:
             try:
                 amount_of_relays = int(input('how many relays? '))
-                break
+                if(amount_of_relays > 1):
+                    break
+                else:
+                    print('number needs to be bigger then 0')
             except:
                 print('this is not a number')
                 continue
@@ -143,11 +147,12 @@ while True:
                 msgFromServer, addr = clientSocket.recvfrom(1024)
                 msgFromServer = msgFromServer.decode()
                 print('Server response: ', msgFromServer)
+                break
             except:
                 print('Server did not respond')
                 continue
 
-    else:
+    if(inputt == ( 'n' or 'N')):
         quit()
         
 
